@@ -53,10 +53,25 @@ const AlbumCard = styled.div<AlbumCardProps>`
 export default function App() {
   const [albuns, setAlbuns] = useState([]);
   const [albumSelected, setAlbumSelected] = useState<Number | undefined>(undefined);
+  const [playlistResume, setPlaylistResume] = useState([]);
+  const [hoverPlaylistId, setHoverPlaylistId] = useState<Number | undefined>(undefined);
 
+  const requestGetApi = async (url: string) => {
+    try {
+      const response = await api.get(url)
+      return response.data
+    }
+    catch (e: any) {
+      throw new Error(`${e?.response?.data || ``}`)
+    }
+  }
   useEffect(() => {
-    api.get(`/sqlSide/album/list`).then(resp => {
-      setAlbuns(resp.data)
+    Promise.all([
+      requestGetApi(`/sqlSide/album/list`),
+      requestGetApi(`/sqlSide/playlist/resume`)
+    ]).then(resp => {
+      setAlbuns(resp[0]);
+      setPlaylistResume(resp[1]);
     }).catch(e => {
       console.log(e)
     })
@@ -71,7 +86,37 @@ export default function App() {
   }
   return (
     <div>
-      <h1>Hello StackBlitz!</h1>
+      <h1>Hello StackBlitz</h1>
+      <div style={{ display: `flex`, width: `100%`, flexWrap: `nowrap` }}>
+        {playlistResume.map((el: any) => {
+          return (
+            <div
+              onMouseOver={() => {
+                setHoverPlaylistId(el.playlistId)
+              }}
+              onMouseOut={() => {
+                setHoverPlaylistId(undefined)
+              }}
+              style={{
+                marginInline: `.2rem`,
+                minWidth: `4rem`,
+                display: `inline-block`
+              }}
+            >
+              <div style={{}}>{el?.name}</div>
+
+              {
+                !!(hoverPlaylistId === el.playlistId) && <>
+                  <div style={{ marginInline: `.5rem` }}>
+                    <pre>{el?.totalTracks} músicas</pre>
+                    </div>
+                </>
+              }
+
+            </div>
+          )
+        })}
+      </div>
       <div>
         {
           albuns && albuns.map((el: { [x: string]: any }) => {
