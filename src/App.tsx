@@ -2,6 +2,7 @@ import React, { useState, useEffect, ReactElement } from 'react';
 import './style.css';
 import { api } from './api';
 import styled from 'styled-components';
+import SphericalChessboard from 'components/SphericalChessboard';
 
 interface AlbumCardProps {
   selected?: boolean;
@@ -51,50 +52,39 @@ const AlbumCard = styled.div<AlbumCardProps>`
 `
 
 export default function App() {
-  const [albuns, setAlbuns] = useState([]);
-  const [albumSelected, setAlbumSelected] = useState<Number | undefined>(undefined);
+
+  const board = new SphericalChessboard(10);
 
   useEffect(() => {
-    api.get(`/sqlSide/album/list`).then(resp => {
-      setAlbuns(resp.data)
-    }).catch(e => {
-      console.log(e)
-    })
-  }, []);
+    const cvs = document.getElementById(`board-canvas`) as HTMLCanvasElement
+    const context = cvs.getContext(`2d`)
 
-  const handleSelectAlbum = (el: any) => {
-    if (!!(albumSelected === el.albumId)) {
-      setAlbumSelected(el.undefined)
-    } else {
-      setAlbumSelected(el.albumId)
+    context.beginPath();
+    context.strokeStyle = `#bebebe`
+    context.lineWidth = 1;
+    for (let i = 0; i <= 800; i += 100) {
+      context.moveTo(0, i);
+      context.lineTo(800, i);
+      context.moveTo(i, 0);
+      context.lineTo(i, 800);
     }
-  }
+    context.stroke();
+    
+    board.renderChessboard(context, 200, 200)
+  }, [])
+
+  const MainBoard = styled.canvas`
+    width: 80vw;
+    height: 80vh
+    display: flex;
+    justify-content: center;
+    aligin-items: center;
+    transform: translate(20%,45%);
+
+  `
   return (
     <div>
-      <h1>Hello StackBlitz!</h1>
-      <div>
-        {
-          albuns && albuns.map((el: { [x: string]: any }) => {
-            return <div>
-              <AlbumCard selected={!!(albumSelected === el.albumId)} >
-                <div className='title'>{el.artista}</div>
-                <div
-                  className='sub-title'
-                  onClick={() => handleSelectAlbum(el)}
-                  role='button'
-                >
-                  {el.albumName}
-                </div>
-                {!!(albumSelected === el.albumId) && <span className='musica-wrapper'>
-                  {el.musica.map((m: { [x: string]: any }) => {
-                    return <span className='tag'>{m.value}</span>
-                  })}
-                </span>}
-              </AlbumCard>
-            </div>
-          })
-        }
-      </div>
+      <MainBoard id={`board-canvas`}></MainBoard>
     </div>
   );
 }
